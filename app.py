@@ -33,6 +33,10 @@ if not _API_KEY:
 
 client = Groq(api_key=_API_KEY)
 
+# Load Google Maps API key
+_GMAPS_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
+logger.info("Google Maps API key loaded" if _GMAPS_KEY else "No Google Maps API key found")
+
 # Path to the mock data file (same directory as this script)
 MOCK_DATA_PATH = os.path.join(os.path.dirname(__file__), "mock_data.json")
 
@@ -219,6 +223,14 @@ def health_check():
         "app": "nolurk.",
         "status": "online",
         "tagline": "No lurk. No risk. Just the right route."
+    }), 200
+
+
+@app.route("/config", methods=["GET"])
+def get_config():
+    """Provide frontend configuration including Google Maps API key."""
+    return jsonify({
+        "google_maps_api_key": _GMAPS_KEY or ""
     }), 200
 
 
