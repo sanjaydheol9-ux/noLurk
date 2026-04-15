@@ -54,9 +54,9 @@ class TestNolurkRouteEvaluation(unittest.TestCase):
         Patch google.generativeai before the Flask app is imported,
         so no real API credentials are required during CI / judge evaluation.
         """
-        # Patch the entire genai module used inside app.py
+        # Patch the genai module used inside app.py
         cls.genai_patcher = patch("google.generativeai.configure")
-        cls.model_patcher  = patch("google.generativeai.GenerativeModel")
+        cls.model_patcher = patch("google.generativeai.GenerativeModel")
 
         cls.genai_patcher.start()
         mock_model_class = cls.model_patcher.start()
@@ -136,8 +136,8 @@ class TestNolurkRouteEvaluation(unittest.TestCase):
     # ------------------------------------------------------------------
 
     def test_health_check_returns_200(self):
-        """GET / must return 200 and confirm the app is online."""
-        response = self.client.get("/")
+        """GET /health must return 200 and confirm the app is online."""
+        response = self.client.get("/health")
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         self.assertEqual(data["status"], "online")

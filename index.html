@@ -642,14 +642,14 @@
 
                 const data = await response.json();
 
-                if (!Array.isArray(data) || data.length === 0) {
-                    throw new Error('No route data received');
+                if (data.status !== 'success' || !Array.isArray(data.evaluations) || data.evaluations.length === 0) {
+                    throw new Error('Invalid response format or no route data received');
                 }
 
                 // Minimum loader time for UX polish
                 await new Promise(resolve => setTimeout(resolve, 1800));
 
-                renderResults(data, query);
+                renderResults(data.evaluations, query);
 
             } catch (err) {
                 console.error('Audit failed:', err);
