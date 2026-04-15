@@ -10,7 +10,7 @@ import logging
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from dotenv import load_dotenv
-import google.generativeai as genai
+from google import genai
 
 # ---------------------------------------------------------------------------
 # Initialisation
@@ -31,8 +31,7 @@ if not _API_KEY:
         "GEMINI_API_KEY is not set. Add it to your .env file before starting the server."
     )
 
-genai.configure(api_key=_API_KEY)
-model = genai.GenerativeModel("gemini-pro")
+client = genai.Client(api_key=_API_KEY)
 
 # Path to the mock data file (same directory as this script)
 MOCK_DATA_PATH = os.path.join(os.path.dirname(__file__), "mock_data.json")
@@ -122,7 +121,10 @@ def evaluate_routes():
         logger.info("Prompt assembled. Sending to Gemini…")
 
         # Step 3 — call Gemini
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(
+            model='gemini-2.0-flash',
+            contents=prompt,
+        )
         raw_text = response.text
         logger.info("Gemini response received (%d chars).", len(raw_text))
 
