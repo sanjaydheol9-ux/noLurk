@@ -604,61 +604,79 @@
         // ── LOAD GOOGLE MAPS SCRIPT ──
         function loadGoogleMapsScript() {
             const script = document.createElement('script');
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&libraries=places`;
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&libraries=places&callback=initMap`;
             script.async = true;
             script.defer = true;
-            script.onload = initMap;
+            script.onerror = () => {
+                console.error('Failed to load Google Maps API');
+                mapContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Map temporarily unavailable</div>';
+            };
+            window.initMap = initMap;
             document.head.appendChild(script);
         }
 
         // ── INITIALIZE MAP ──
         function initMap() {
-            // Create a default map centered on Bangalore
-            googleMap = new google.maps.Map(mapContainer, {
-                zoom: 14,
-                center: { lat: 12.9716, lng: 77.5946 },
-                styles: [
-                    { elementType: 'geometry', stylers: [{ color: '#f5f5f5' }] },
-                    { elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
-                    { elementType: 'labels.text.fill', stylers: [{ color: '#616161' }] },
-                    { elementType: 'labels.text.stroke', stylers: [{ color: '#f5f5f5' }] },
-                    { featureType: 'administrative.land_parcel', elementType: 'labels.text.fill', stylers: [{ color: '#bdbdbd' }] },
-                    { featureType: 'poi', elementType: 'geometry', stylers: [{ color: '#eeeeee' }] },
-                    { featureType: 'poi', elementType: 'labels.text.fill', stylers: [{ color: '#757575' }] },
-                    { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#e5e5e5' }] },
-                    { featureType: 'poi.park', elementType: 'labels.text.fill', stylers: [{ color: '#9e9e9e' }] },
-                    { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
-                    { featureType: 'road.arterial', elementType: 'labels.text.fill', stylers: [{ color: '#757575' }] },
-                    { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#dadada' }] },
-                    { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#616161' }] },
-                    { featureType: 'road.local', elementType: 'labels.text.fill', stylers: [{ color: '#9e9e9e' }] },
-                    { featureType: 'transit.line', elementType: 'geometry', stylers: [{ color: '#e5e5e5' }] },
+            try {
+                // Create a default map centered on Bangalore
+                googleMap = new google.maps.Map(mapContainer, {
+                    zoom: 14,
+                    center: { lat: 12.9716, lng: 77.5946 },
+                    styles: [
+                        { elementType: 'geometry', stylers: [{ color: '#f5f5f5' }] },
+                        { elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+                        { elementType: 'labels.text.fill', stylers: [{ color: '#616161' }] },
+                        { elementType: 'labels.text.stroke', stylers: [{ color: '#f5f5f5' }] },
+                        { featureType: 'administrative.land_parcel', elementType: 'labels.text.fill', stylers: [{ color: '#bdbdbd' }] },
+                        { featureType: 'poi', elementType: 'geometry', stylers: [{ color: '#eeeeee' }] },
+                        { featureType: 'poi', elementType: 'labels.text.fill', stylers: [{ color: '#757575' }] },
+                        { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#e5e5e5' }] },
+                        { featureType: 'poi.park', elementType: 'labels.text.fill', stylers: [{ color: '#9e9e9e' }] },
+                        { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
+                        { featureType: 'road.arterial', elementType: 'labels.text.fill', stylers: [{ color: '#757575' }] },
+                        { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#dadada' }] },
+                        { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#616161' }] },
+                        { featureType: 'road.local', elementType: 'labels.text.fill', stylers: [{ color: '#9e9e9e' }] },
+                        { featureType: 'transit.line', elementType: 'geometry', stylers: [{ color: '#e5e5e5' }] },
                     { featureType: 'transit.station', elementType: 'geometry', stylers: [{ color: '#eeeeee' }] },
                     { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#c9c9c9' }] },
                     { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#9e9e9e' }] }
                 ]
-            });
-            geocoder = new google.maps.Geocoder();
+                });
+                geocoder = new google.maps.Geocoder();
+            } catch (err) {
+                console.error('Error initializing map:', err);
+                mapContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;"><strong>Map Error:</strong> ' + err.message + '</div>';
+            }
         }
 
         // ── DISPLAY LOCATION ON MAP ──
         function displayLocationOnMap(query) {
-            if (!googleMap || !geocoder) return;
+            if (!googleMap || !geocoder) {
+                console.warn('Map not initialized, skipping location display');
+                return;
+            }
             
-            geocoder.geocode({ address: query }, (results, status) => {
-                if (status === 'OK' && results[0]) {
-                    const location = results[0].geometry.location;
-                    googleMap.setCenter(location);
-                    googleMap.setZoom(15);
-                    
-                    new google.maps.Marker({
-                        map: googleMap,
-                        position: location,
-                        title: query,
-                        icon: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png'
-                    });
-                }
-            });
+            try {
+                geocoder.geocode({ address: query }, (results, status) => {
+                    if (status === 'OK' && results[0]) {
+                        const location = results[0].geometry.location;
+                        googleMap.setCenter(location);
+                        googleMap.setZoom(15);
+                        
+                        new google.maps.Marker({
+                            map: googleMap,
+                            position: location,
+                            title: query,
+                            icon: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png'
+                        });
+                    } else {
+                        console.warn('Geocoding status:', status);
+                    }
+                });
+            } catch (err) {
+                console.error('Error displaying location on map:', err);
+            }
         }
 
         // Allow Enter key to trigger scan
