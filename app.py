@@ -10,7 +10,7 @@ import logging
 from flask import Flask, jsonify, request, send_file
 from flask_cors import CORS
 from dotenv import load_dotenv
-import google.generativeai as genai
+from groq import Groq
 
 # ---------------------------------------------------------------------------
 # Initialisation
@@ -24,14 +24,14 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 CORS(app)
 
-# Safely configure Gemini client — crash early if the key is missing
-_API_KEY = os.getenv("GEMINI_API_KEY")
+# Safely configure Groq client — crash early if the key is missing
+_API_KEY = os.getenv("GROQ_API_KEY")
 if not _API_KEY:
     raise EnvironmentError(
-        "GEMINI_API_KEY is not set. Add it to your .env file before starting the server."
+        "GROQ_API_KEY is not set. Add it to your .env file before starting the server."
     )
 
-genai.configure(api_key=_API_KEY)
+client = Groq(api_key=_API_KEY)
 
 # Path to the mock data file (same directory as this script)
 MOCK_DATA_PATH = os.path.join(os.path.dirname(__file__), "mock_data.json")
@@ -54,7 +54,7 @@ def load_mock_data() -> dict:
 def build_prompt(routes: list, hazards: list) -> str:
     """
     Assemble a plain-text prompt that injects the route + hazard data
-    exactly where Gemini expects it.
+    for the AI safety auditor.
     """
     data_block = json.dumps({"routes": routes, "hazards": hazards}, indent=2)
 
@@ -76,12 +76,13 @@ Return ONLY a valid JSON array matching this format:
 
 
 # ---------------------------------------------------------------------------
-# Helper – extract JSON from Gemini's reply
+# Helper – extract JSON from API response
 # ---------------------------------------------------------------------------
 
 def extract_json_array(text: str) -> list:
     """
-    Gemini sometimes wraps its JSON in markdown fences.
+    Extract JSON array from API response.
+    Sometimes the response wraps JSON in markdown fences.
     Strip those fences and parse the raw array.
     """
     # Remove ```json ... ``` or ``` ... ``` wrappers if present
@@ -140,8 +141,8 @@ def evaluate_routes():
 
     Workflow:
       1. Load mock routes + hazards from mock_data.json
-      2. Build the Gemini prompt
-      3. Call Gemini 1.5 Pro
+      2. Build the prompt
+      3. Call Groq API (mixtral-8x7b)
       4. Parse + return the JSON response
 
     Returns:
@@ -158,19 +159,25 @@ def evaluate_routes():
 
         # Step 2 — build prompt
         prompt = build_prompt(routes, hazards)
-        logger.info("Prompt assembled. Sending to Gemini…")
+        logger.info("Prompt assembled. Sending to Groq…")
 
-        # Step 3 — call Gemini (with fallback on quota exceeded)
+        # Step 3 — call Groq (with fallback on quota exceeded)
         try:
-            model = genai.GenerativeModel('gemini-2.0-flash')
-            response = model.generate_content(prompt)
-            raw_text = response.text
-            logger.info("Gemini response received (%d chars).", len(raw_text))
+            response = client.chat.completions.create(
+                model="mixtral-8x7b-32768",
+                messages=[
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.3,
+                max_tokens=1024
+            )
+            raw_text = response.choices[0].message.content
+            logger.info("Groq response received (%d chars).", len(raw_text))
 
             # Step 4 — parse and return
             evaluations = extract_json_array(raw_text)
         except Exception as api_err:
-            logger.warning("Gemini API failed (%s). Using mock evaluations as fallback.", str(api_err)[:100])
+            logger.warning("Groq API failed (%s). Using mock evaluations as fallback.", str(api_err)[:100])
             # Fallback to mock evaluations
             evaluations = generate_mock_evaluations(routes)
 

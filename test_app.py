@@ -51,20 +51,20 @@ class TestNolurkRouteEvaluation(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """
-        Patch google.generativeai before the Flask app is imported,
+        Patch groq.Groq before the Flask app is imported,
         so no real API credentials are required during CI / judge evaluation.
         """
-        # Patch the genai module used inside app.py
-        cls.genai_patcher = patch("google.generativeai.configure")
-        cls.model_patcher = patch("google.generativeai.GenerativeModel")
+        # Patch the Groq client used inside app.py
+        cls.groq_patcher = patch("groq.Groq")
 
-        cls.genai_patcher.start()
-        mock_model_class = cls.model_patcher.start()
+        mock_groq_class = cls.groq_patcher.start()
 
-        # Make GenerativeModel(...).generate_content(...) return our mock payload
-        mock_instance = MagicMock()
-        mock_instance.generate_content.return_value = MagicMock(text=MOCK_GEMINI_PAYLOAD)
-        mock_model_class.return_value = mock_instance
+        # Make Groq client and its chat.completions.create return our mock payload
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock(message=MagicMock(content=MOCK_GEMINI_PAYLOAD))]
+        mock_client.chat.completions.create.return_value = mock_response
+        mock_groq_class.return_value = mock_client
 
         # Now it's safe to import the Flask app
         from app import app  # noqa: PLC0415
@@ -73,8 +73,7 @@ class TestNolurkRouteEvaluation(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.genai_patcher.stop()
-        cls.model_patcher.stop()
+        cls.groq_patcher.stop()
 
     # ------------------------------------------------------------------
     # Test 1 – Endpoint reachability (required by rubric)
