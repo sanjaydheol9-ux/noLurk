@@ -1,0 +1,81 @@
+{
+  "hazards": [
+    {
+      "id": "hazard_1",
+      "name": "Unlit Alley – Shivajinagar Back Lane",
+      "type": "Unlit Alley",
+      "description": "Narrow, poorly lit service lane behind Shivajinagar bus stand. Reported loitering after dark.",
+      "bounding_box": {
+        "north": 12.9830,
+        "south": 12.9820,
+        "east": 77.5985,
+        "west": 77.5970
+      }
+    },
+    {
+      "id": "hazard_2",
+      "name": "Isolated Construction Site – MG Road Extension",
+      "type": "Isolated Construction",
+      "description": "Active metro construction zone with no pedestrian lighting. Uneven ground and zero surveillance past 8 PM.",
+      "bounding_box": {
+        "north": 12.9762,
+        "south": 12.9748,
+        "east": 77.6115,
+        "west": 77.6095
+      }
+    }
+  ],
+  "routes": [
+    {
+      "route_id": "route_1",
+      "label": "Fastest Route",
+      "duration_minutes": 11,
+      "distance_km": 0.95,
+      "passes_through_hazards": ["hazard_1"],
+      "waypoints": [
+        { "lat": 12.9845, "lng": 77.5960, "note": "Start – Cubbon Park Gate" },
+        { "lat": 12.9835, "lng": 77.5970, "note": "Entering Shivajinagar back lane area" },
+        { "lat": 12.9825, "lng": 77.5978, "note": "⚠️ INSIDE hazard_1 – Unlit Alley" },
+        { "lat": 12.9810, "lng": 77.5990, "note": "Exiting hazard zone" },
+        { "lat": 12.9795, "lng": 77.6005, "note": "End – Shivajinagar Bus Stand" }
+      ],
+      "road_type": "Mix of main road and narrow service lane",
+      "lighting": "Poor – one hazard zone is completely unlit",
+      "foot_traffic": "Low after 9 PM"
+    },
+    {
+      "route_id": "route_2",
+      "label": "Safest Route",
+      "duration_minutes": 15,
+      "distance_km": 1.25,
+      "passes_through_hazards": [],
+      "waypoints": [
+        { "lat": 12.9845, "lng": 77.5960, "note": "Start – Cubbon Park Gate" },
+        { "lat": 12.9848, "lng": 77.5985, "note": "Along well-lit Ambedkar Road" },
+        { "lat": 12.9835, "lng": 77.6010, "note": "Passing BMTC depot – high foot traffic" },
+        { "lat": 12.9815, "lng": 77.6018, "note": "Commercial street stretch – shops open" },
+        { "lat": 12.9795, "lng": 77.6005, "note": "End – Shivajinagar Bus Stand" }
+      ],
+      "road_type": "100% main roads with footpaths",
+      "lighting": "Excellent – street lights throughout",
+      "foot_traffic": "High – busy commercial zone"
+    },
+    {
+      "route_id": "route_3",
+      "label": "Balanced Route",
+      "duration_minutes": 13,
+      "distance_km": 1.08,
+      "passes_through_hazards": ["hazard_2"],
+      "waypoints": [
+        { "lat": 12.9845, "lng": 77.5960, "note": "Start – Cubbon Park Gate" },
+        { "lat": 12.9820, "lng": 77.5980, "note": "Trinity Circle – well-lit intersection" },
+        { "lat": 12.9788, "lng": 77.6050, "note": "Approaching MG Road metro zone" },
+        { "lat": 12.9755, "lng": 77.6100, "note": "⚠️ INSIDE hazard_2 – Construction site edge" },
+        { "lat": 12.9795, "lng": 77.6005, "note": "End – Shivajinagar Bus Stand" }
+      ],
+      "road_type": "Main road with a construction bypass",
+      "lighting": "Mixed – mostly lit but construction zone is dark",
+      "foot_traffic": "Medium – drops near construction zone"
+    }
+  ]
+}
