@@ -24,6 +24,17 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 CORS(app)
 
+# Add security headers
+@app.after_request
+def set_security_headers(response):
+    """Add security headers to all responses."""
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    response.headers['Content-Security-Policy'] = "default-src 'self' https: data:; script-src 'self' https://maps.googleapis.com 'unsafe-inline'; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data:"
+    return response
+
 # Safely configure Groq client — crash early if the key is missing
 _API_KEY = os.getenv("GROQ_API_KEY")
 if not _API_KEY:
@@ -232,6 +243,31 @@ def get_config():
     return jsonify({
         "google_maps_api_key": _GMAPS_KEY or ""
     }), 200
+
+
+@app.route("/robots.txt", methods=["GET"])
+def robots():
+    """Google Search Console integration."""
+    return "User-agent: *\nAllow: /\nSitemap: http://localhost:5000/sitemap.xml", 200, {"Content-Type": "text/plain"}
+
+
+@app.route("/sitemap.xml", methods=["GET"])
+def sitemap():
+    """XML sitemap for Google indexing."""
+    sitemap_xml = """<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>http://localhost:5000/</loc>
+    <lastmod>2026-04-15</lastmod>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>http://localhost:5000/health</loc>
+    <lastmod>2026-04-15</lastmod>
+    <priority>0.5</priority>
+  </url>
+</urlset>"""
+    return sitemap_xml, 200, {"Content-Type": "application/xml"}
 
 
 # ---------------------------------------------------------------------------
